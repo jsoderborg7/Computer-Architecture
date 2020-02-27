@@ -68,25 +68,42 @@ class CPU:
         PRN = 0b01000111
         HLT = 0b0000001
         MUL = 0b10100010
+        PUSH = 0b01000101
+        POP = 0b01000110
+
+        SP = 255
 
         """Run the CPU."""
         running = True
         while running:
-            IR = self.pc
+        # set some values, make life easier
+            IR = self.ram_read(self.pc)
+            operand_a = self.ram_read(self.pc + 1)
+            operand_b = self.ram_read(self.pc + 2)
             # LDI
-            if self.ram[IR] == LDI:
-                self.reg[self.ram[IR + 1]] = self.ram[IR + 2]
+            if IR == LDI:
+                self.reg[operand_a] = operand_b
                 self.pc += 3
             # PRN
-            elif self.ram[IR] == PRN:
-                print(self.reg[self.ram[IR + 1]])
+            elif IR == PRN:
+                print(self.reg[operand_a])
                 self.pc += 2
             # MUL
-            elif self.ram[IR] == MUL:
-                self.alu('MUL', self.ram[IR + 1], self.ram[IR + 2])
+            elif IR == MUL:
+                self.alu('MUL', operand_a, operand_b)
                 self.pc += 3
+            # PUSH
+            elif IR == PUSH:
+                SP -= 1
+                self.ram_write(SP, self.reg[operand_a])
+                self.pc += 2
+            # POP
+            elif IR == POP:
+                self.reg[operand_a] = self.ram[SP]
+                SP += 1
+                self.pc += 2
             # HLT
-            elif self.ram[IR] == HLT:
+            elif IR == HLT:
                 running = False
             
             else:
