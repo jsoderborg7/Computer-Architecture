@@ -13,24 +13,21 @@ class CPU:
 
     def load(self):
         """Load a program into memory."""
+        if len(sys.argv) != 2:
+            print("Gotta have a filename")
+            sys.exit(1)
 
         address = 0
-
-        # For now, we've just hardcoded a program:
-
-        program = [
-            # From print8.ls8
-            0b10000010, # LDI R0,8
-            0b00000000,
-            0b00001000,
-            0b01000111, # PRN R0
-            0b00000000,
-            0b00000001, # HLT
-        ]
-
-        for instruction in program:
-            self.ram[address] = instruction
-            address += 1
+        program = sys.argv[1]
+        with open(program) as f:
+            for line in f:
+                line = line.strip()
+                split = line.split('#')[0]
+                if split == '':
+                    continue
+                value = int(split, 2)
+                self.ram[address] = value
+                address += 1
 
 
     def alu(self, op, reg_a, reg_b):
@@ -40,6 +37,8 @@ class CPU:
             self.reg[reg_a] += self.reg[reg_b]
         elif op == "SUB":
             self.reg[reg_a] -= self.reg[reg_b]
+        elif op == "MUL":
+            self.reg[reg_a] *= self.reg[reg_b]
         else:
             raise Exception("Unsupported ALU operation")
 
@@ -64,24 +63,37 @@ class CPU:
         print()
 
     def run(self):
+
+        LDI = 0b10000010
+        PRN = 0b01000111
+        HLT = 0b0000001
+        MUL = 0b10100010
+
         """Run the CPU."""
         running = True
         while running:
+            IR = self.pc
             # LDI
-            if self.ram[self.pc] == 0b10000010:
-                self.reg[int(str(self.ram[self.pc + 1]), 2)] = self.ram[self.pc + 2]
+            if self.ram[IR] == LDI:
+                self.reg[self.ram[IR + 1]] = self.ram[IR + 2]
                 self.pc += 3
             # PRN
-            elif self.ram[self.pc] == 0b01000111:
-                print(self.reg[int(str(self.ram[self.pc + 1]), 2)])
+            elif self.ram[IR] == PRN:
+                print(self.reg[self.ram[IR + 1]])
                 self.pc += 2
+            # MUL
+            elif self.ram[IR] == MUL:
+                self.alu('MUL', self.ram[IR + 1], self.ram[IR + 2])
+                self.pc += 3
             # HLT
-            elif self.ram[self.pc] == 0b0000001:
-                self.pc = 0
+            elif self.ram[IR] == HLT:
                 running = False
+            
+            else:
+                self.pc = self.pc + 1
 
     def ram_read(self, address):
-        return self.ram[int(str(address), 2)]
+        return self.ram[address]
 
     def ram_write(self, address, value):
-        self.ram[int(str(address), 2)] = value
+        self.ram[address] = value
