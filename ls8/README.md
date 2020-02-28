@@ -65,6 +65,12 @@ but you'll have to implement those three above instructions first!
 * Read this whole file.
 * Skim the spec.
 
+  cpu- holds the program and primary functions
+  ls8- the entry point, this file runs the program
+  examples- contains various example instructions for the cpu
+  asm- has the .asm files (scripts in assembly language)
+  
+
 ## Step 1: Add the constructor to `cpu.py`
 
 Add list properties to the `CPU` class to hold 256 bytes of memory and 8
